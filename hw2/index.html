@@ -38,67 +38,108 @@ xhr.open('GET', openUrl, true);
 xhr.send();
 xhr.onreadystatechange = function() {
   if (xhr.readyState == 4 && xhr.status == 200) {
-      window.dataset = JSON.parse(xhr.responseText);
-      addNewData();
+    window.dataset = JSON.parse(xhr.responseText);
+    addNewData();
   }
 };
 
 var currentPage = 1;
+var pageSize = 10;
+var filteredData = [];
+
 function addNewData() {
   var mytable = document.getElementById("hw1");
   var Header = mytable.rows[0];
   mytable.innerHTML = '';
   mytable.appendChild(Header);
-  var pagesize = 10;
-  var start_index = (currentPage - 1) * pagesize;
-  var end_index = dataset.length;
-  window.dataset.forEach(function(data, index) {
-    if(index >= start_index && index < start_index + pagesize && index < end_index) {
-      var row = mytable.insertRow(-1); 
-      row.insertCell(0).innerHTML = data['title']; 
-      row.insertCell(1).innerHTML = data['showInfo'][0]['location'];
-      row.insertCell(2).innerHTML = data['showInfo'][0]['price'];
-    }  
-  });
+    
+  var start_index = (currentPage - 1) * pageSize;
+  var end_index = Math.min(start_index + pageSize, window.dataset.length);
+    
+  for (var i = start_index; i < end_index; i++) {
+     var data = window.dataset[i];
+     var row = mytable.insertRow(-1); 
+     row.insertCell(0).innerHTML = data['title']; 
+     row.insertCell(1).innerHTML = data['showInfo'][0]['location'];
+     row.insertCell(2).innerHTML = data['showInfo'][0]['price'];
+  }
+    
   ShowPage();
 }
 
-function PreData() {
-  if(currentPage > 1) {
-    currentPage--;
-    addNewData();
-  }
-}
-
-function NextData() {
-  if(currentPage < Math.ceil(dataset.length / 10))
-  currentPage++;
-  addNewData();
-}
-
-function ShowPage() {
-  var number = document.getElementById('Page');
-  number.innerHTML = currentPage + "/" + Math.ceil(dataset.length / 10) + "頁";
-}
-
-function SearchData() {
+function addSearchData() {
   var mytable = document.getElementById("hw1");
   var Header = mytable.rows[0];
   mytable.innerHTML = '';
   mytable.appendChild(Header);
+    
+  var start_index = (currentPage - 1) * pageSize;
+  var end_index = Math.min(start_index + pageSize, filteredData.length);
+    
+  for (var i = start_index; i < end_index; i++) {
+    var data = filteredData[i];
+    var row = mytable.insertRow(-1); 
+    row.insertCell(0).innerHTML = data['title']; 
+    row.insertCell(1).innerHTML = data['showInfo'][0]['location'];
+    row.insertCell(2).innerHTML = data['showInfo'][0]['price'];
+  } 
+  ShowPage();
+}
+
+function PreData() {
+  if (currentPage > 1) {
+    currentPage--;
+    if (document.getElementById("Str").value === '') {
+      addNewData();
+    }
+    else {
+      addSearchData();
+    }
+  }
+}
+
+function NextData() {
+  if (currentPage < Math.ceil(window.dataset.length / pageSize)) {
+    currentPage++;
+    if (document.getElementById("Str").value === '') {
+      addNewData();
+    } 
+    else {
+      addSearchData();
+    }
+  }
+}
+
+function ShowPage() {
+  var number = document.getElementById('Page');
+    if (document.getElementById("Str").value === '') {
+      number.innerHTML = currentPage + "/" + Math.ceil(window.dataset.length / pageSize) + "頁";
+    } else {
+      number.innerHTML = currentPage + "/" + Math.ceil(filteredData.length / pageSize) + "頁";
+    }
+}
+
+function SearchData() {
   var keyword = document.getElementById("Str").value;
-  window.dataset.forEach(function(data, index) {
+  if (keyword === '') {
+    addNewData();
+    return;
+  }
+    
+  filteredData = window.dataset.filter(function(data) {
     var title = data['title'];
     var location = data['showInfo'][0]['location'];
     var price = data['showInfo'][0]['price'];
-    if(title.includes(keyword) || location.includes(keyword) || price.includes(keyword)) {
-      var row = mytable.insertRow(-1); 
-      row.insertCell(0).innerHTML = data['title']; 
-      row.insertCell(1).innerHTML = data['showInfo'][0]['location'];
-      row.insertCell(2).innerHTML = data['showInfo'][0]['price'];
-    }  
+    return title.includes(keyword) || location.includes(keyword) || price.includes(keyword);
   });
+    
+  currentPage = 1;
+  addSearchData();
 }
+
+document.getElementById("Str").addEventListener("input", function() {
+    SearchData();
+});
 </script>
 </body>
 </html>
